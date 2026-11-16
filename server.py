@@ -26,17 +26,14 @@ def run_server(host="127.0.0.1", port=9000, num_chunks=10, expected_clients=1):
                    pkt["chunk_id"], pkt["payload_len"], client_addr)
         print(f"[SERVER] RECV {pkt['msg_name']} (Seq={pkt['seq_num']}) from Client {pkt['peer_id']} at {client_addr}")
 
-        # 1. Handle INIT Exchange
         if pkt["msg_type"] == MSG_INIT_REQ:
             seq_num += 1
-            # Send back INIT_ACK with the total chunk count as payload
             ack_payload = f"CHUNKS_AVAILABLE:{num_chunks}".encode("utf-8")
             resp = pack_packet(MSG_INIT_ACK, seq_num, peer_id=0, payload=ack_payload)
             sock.sendto(resp, client_addr)
             logger.log("SEND", MSG_INIT_ACK, seq_num, 0, NO_CHUNK, len(ack_payload), client_addr)
             print(f"[SERVER] SEND INIT_ACK (Seq={seq_num}) -> Client {pkt['peer_id']}")
 
-        # 2. Handle DATA Exchange
         elif pkt["msg_type"] == MSG_CHUNK_REQ:
             cid = pkt["chunk_id"]
             if cid in chunks:
@@ -47,7 +44,6 @@ def run_server(host="127.0.0.1", port=9000, num_chunks=10, expected_clients=1):
                 logger.log("SEND", MSG_CHUNK_DATA, seq_num, 0, cid, len(payload), client_addr)
                 print(f"[SERVER] SEND CHUNK_DATA (Chunk_ID={cid}, {len(payload)} bytes) -> Client {pkt['peer_id']}")
 
-        # 3. Handle Completion
         elif pkt["msg_type"] == MSG_MAP_COMPLETE:
             completed_clients.add(pkt["peer_id"])
             print(

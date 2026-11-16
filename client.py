@@ -9,7 +9,7 @@ from protocol import (
 
 def run_client(peer_id=1, server_host="127.0.0.1", server_port=9000, num_chunks=10):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(0.5)  # 500 ms timeout per Operational Constraints
+    sock.settimeout(0.5)
     server_addr = (server_host, server_port)
 
     logger = PacketLogger(f"client_{peer_id}_log")
@@ -17,9 +17,7 @@ def run_client(peer_id=1, server_host="127.0.0.1", server_port=9000, num_chunks=
     received_chunks = {}
     start_time = time.time()
 
-    # =========================================================================
-    # STEP 1: INIT EXCHANGE (Send INIT_REQ -> Wait for INIT_ACK)
-    # =========================================================================
+
     initialized = False
     while not initialized:
         seq_num += 1
@@ -40,9 +38,6 @@ def run_client(peer_id=1, server_host="127.0.0.1", server_port=9000, num_chunks=
         except socket.timeout:
             print(f"[CLIENT {peer_id}] Timeout waiting for INIT_ACK, retrying...")
 
-    # =========================================================================
-    # STEP 2: DATA EXCHANGE (Send CHUNK_REQ -> Receive & Verify CHUNK_DATA)
-    # =========================================================================
     for cid in range(num_chunks):
         while cid not in received_chunks:
             seq_num += 1
@@ -66,9 +61,6 @@ def run_client(peer_id=1, server_host="127.0.0.1", server_port=9000, num_chunks=
             except socket.timeout:
                 print(f"[CLIENT {peer_id}] Timeout (500ms) on Chunk {cid}, re-requesting...")
 
-    # =========================================================================
-    # STEP 3: SEND MAP_COMPLETE
-    # =========================================================================
     seq_num += 1
     comp_payload = b"ALL_CHUNKS_VERIFIED"
     comp_pkt = pack_packet(MSG_MAP_COMPLETE, seq_num, peer_id, payload=comp_payload)

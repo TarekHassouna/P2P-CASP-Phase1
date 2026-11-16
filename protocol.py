@@ -5,20 +5,17 @@ import time
 import csv
 import os
 
-# 12-Byte Custom Binary Header (<= 16 bytes requirement)
-# Fields: Protocol_ID (2B), Version (1B), Message_Type (1B),
-#         Sequence_Num (2B), Peer_ID (2B), Chunk_ID (2B), Payload_Length (2B)
+
 HEADER_FORMAT = '!HBBHHHH'
-HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 12 bytes
-PROTOCOL_ID = 0x4353  # 'CS'
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
+PROTOCOL_ID = 0x4353
 VERSION = 1
 
-# Phase 1 Message Types (INIT and DATA exchanges)
-MSG_INIT_REQ     = 1  # Client -> Server (INIT)
-MSG_INIT_ACK     = 2  # Server -> Client (INIT response + Bitmap)
-MSG_CHUNK_REQ    = 3  # Client -> Server (DATA request)
-MSG_CHUNK_DATA   = 4  # Server -> Client (DATA payload delivery)
-MSG_MAP_COMPLETE = 5  # Client -> Server (Completion notification)
+MSG_INIT_REQ     = 1
+MSG_INIT_ACK     = 2
+MSG_CHUNK_REQ    = 3
+MSG_CHUNK_DATA   = 4
+MSG_MAP_COMPLETE = 5
 
 MSG_NAMES = {
     1: "INIT_REQ",
@@ -28,7 +25,7 @@ MSG_NAMES = {
     5: "MAP_COMPLETE"
 }
 
-CHUNK_RAW_SIZE = 1024  # 1024B data + 16B hash = 1040B (<= 1200B MTU limit)
+CHUNK_RAW_SIZE = 1024
 NO_CHUNK = 0xFFFF
 
 def pack_packet(msg_type, seq_num, peer_id, chunk_id=NO_CHUNK, payload=b''):
@@ -65,7 +62,6 @@ def unpack_packet(data):
     }
 
 def generate_chunks(num_chunks=10, seed=2026):
-    """Generates deterministic pseudo-random chunks with a 16-byte SHA-256 hash prefix."""
     chunks = {}
     for cid in range(num_chunks):
         rng = random.Random(seed + cid)
@@ -81,7 +77,6 @@ def verify_chunk(payload):
     return hashlib.sha256(raw_data).digest()[:16] == digest
 
 class PacketLogger:
-    """Logs all sent/received packets with timestamps and metadata to CSV."""
     def __init__(self, node_name, log_dir="logs"):
         os.makedirs(log_dir, exist_ok=True)
         self.filepath = os.path.join(log_dir, f"{node_name}.csv")
